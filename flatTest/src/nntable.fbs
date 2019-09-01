@@ -1,0 +1,30 @@
+
+namespace NNExecutor;
+
+union kernel_info {
+    Conv,
+    Relu
+}
+
+table Kernel {
+    opcode:string;
+    opinfo:kernel_info;
+}
+
+table CompOutput {
+    inst:[Kernel];
+}
+
+table Conv {
+    name: string;
+    kernel_size:int;
+    stride_size:int;
+    pad_size:int;
+}
+
+table Relu {
+    name: string;
+    type:string;
+}
+
+root_type CompOutput;
