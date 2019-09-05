@@ -5,9 +5,17 @@
 
 using namespace NNExecutor;
 
+void flatbuff_serialize_test(std::string filename);
+
 int main(void) {
     std::cout << "This is flatbuffer test code.\n";
 
+    flatbuff_serialize_test("fbuff_output.dat");
+
+    return 0;
+}
+
+void flatbuff_serialize_test(std::string filename) {
     flatbuffers::FlatBufferBuilder builder(128);
 
     /* Convolution OP code generation
@@ -52,7 +60,9 @@ int main(void) {
     int buf_size = builder.GetSize();
 
     std::ofstream fbfile;
-    fbfile.open("fbuff_output.dat", std::ios::out | std::ios::binary);
+    fbfile.open(filename.c_str(), std::ios::out | std::ios::binary);
     fbfile.write((char*)buf_ptr, buf_size);
     fbfile.close();
+
+
 }
