@@ -1,6 +1,29 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
+#include <cstring>
+#include <cmath>
+
+#include "type.h"
+#include "conv3d.h"
+
+void check_sqnr( float *ref, float *out, int out_num, float &sqnr ) {
+    float spower = 0;   // signal power
+    float npower = 0;   // noise power
+
+    for(int i = 0 ; i < out_num ; i++) {
+        float signal = (*ref);
+        float noise = (*ref++) - (*out++);
+        spower += signal * signal;
+        npower += noise * noise;
+    }
+
+    sqnr = 10 * log10( spower / npower );
+    //std::cout << "spower = " << spower << "\t";
+    //std::cout << "npower = " << npower << "\n";
+
+    return;
+}
 
 int readBinaryData(char* &buf, std::string filename) {
     /* File open
@@ -65,17 +88,62 @@ int main(int argc, char **argv) {
     std::cout << "Bias file name   = " << biasFileName << std::endl;
     std::cout << "OFM file name    = " << ofmFileName << std::endl;
 
-    char *ibuf, *wbuf, *bbuf, *obuf;
+    char *ibuf, *wbuf, *bbuf, *obuf, *robuf;
 
-    if( readBinaryData( ibuf, ifmFileName ) < 1 )
-        std::cerr << "[Warning] read file size is zero!" << std::endl;
-    if( readBinaryData( wbuf, weightFileName ) < 1 )
-        std::cerr << "[Warning] read file size is zero!" << std::endl;
-    if( readBinaryData( bbuf, biasFileName ) < 1 )
-        std::cerr << "[Warning] read file size is zero!" << std::endl;
-    if( readBinaryData( obuf, ofmFileName ) < 1 )
-        std::cerr << "[Warning] read file size is zero!" << std::endl;
+    int ibuf_size = readBinaryData( ibuf, ifmFileName );
+    int wbuf_size = readBinaryData( wbuf, weightFileName );
+    int bbuf_size = readBinaryData( bbuf, biasFileName );
+    int obuf_size = readBinaryData( robuf, ofmFileName );
+    if( ibuf_size < 1 ) {
+        std::cerr << "[Error] read input file size is zero!" << std::endl;
+        return 0;
+    }
+    if( wbuf_size < 1 ) {
+        std::cerr << "[Error] read weight file size is zero!" << std::endl;
+        return 0;
+    }
+    if( bbuf_size < 1 ) {
+        std::cerr << "[Error] read bias file size is zero!" << std::endl;
+        return 0;
+    }
+    if( obuf_size < 1 ) {
+        std::cerr << "[Error] read output file size is zero!" << std::endl;
+        return 0;
+    }
 
+    obuf = new char [ obuf_size ];
+    memset( obuf, 0, obuf_size );
+
+
+    /* construct conv test date information 
+     */
+    ConvInfo cinfo;
+    cinfo.ifmDim[0] = 1;
+    cinfo.ifmDim[1] = 1; 
+    cinfo.ifmDim[2] = 28;
+    cinfo.ifmDim[3] = 28;
+    cinfo.kernel_size_w = 5; cinfo.kernel_size_h = 5;
+    cinfo.stride_size_w = 1; cinfo.stride_size_h = 1;
+    cinfo.pad_size_w    = 0; cinfo.pad_size_h    = 0;
+    cinfo.output_num = 20;
+
+    /* Run conv operation test code 
+     */
+    test_kernel_conv3d( 
+        (float*) obuf,
+        (float*) ibuf,
+        (float*) wbuf,
+        (float*) bbuf,
+        cinfo
+    );
+
+
+    /* Check the SQNR of the output
+     */
+    float Sqnr;
+    check_sqnr( (float*)robuf, (float*)obuf, obuf_size/sizeof(float), Sqnr );
+
+    std::cout << "SQNR = " << Sqnr << std::endl;
 
     /* Free allocated buffers
      */
@@ -83,6 +151,7 @@ int main(int argc, char **argv) {
     delete [] wbuf;
     delete [] bbuf;
     delete [] obuf;
+    delete [] robuf;
 
     return 0;
 }
