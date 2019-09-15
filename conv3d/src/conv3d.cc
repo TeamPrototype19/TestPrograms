@@ -28,19 +28,22 @@ void test_kernel_conv3d(
 
         /* IFM loop (3D)
          */
-        for(int h = 0 ; h < H ; h++) {
-            for(int w = 0 ; w < W ; w++) {
+        for(int h = -PH ; h < (H+PH) ; h += SH) {
+            for(int w = -PW ; w < (W+PW) ; w += SW) {
 
                 /* Kernel loop
                  */
-                if( (w+KW) <= W && (h+KH) <= H ) {
+                if( (w+KW) <= (W+PW) && (h+KH) <= (H+PH) ) {
                     float sum = 0;
                     for(int c = 0 ; c < C ; c++) {
                         for(int kh = 0 ; kh < KH ; kh++) {
-                            float *i = input + (W*(h+kh)) + (W*H*c) + w;
-                            float *w = weight + (KW*kh) + (KW*KH*c) + (KW*KH*C*o);
-                            for(int kw = 0 ; kw < KW ; kw++) {
-                                sum += (*i++) * (*w++);
+                            if( (h+kh) >= 0 && (h+kh) < H ) {
+                                float *inp = input + (W*(h+kh)) + (W*H*c) + w;
+                                float *wgt = weight + (KW*kh) + (KW*KH*c) + (KW*KH*C*o);
+                                for(int kw = 0 ; kw < KW ; kw++) {
+                                    if( (w+kw) >= 0 && (w+kw) < W )
+                                        sum += (*inp++) * (*wgt++);
+                                }
                             }
                         }
                     }
