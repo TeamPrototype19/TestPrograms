@@ -1,0 +1,12 @@
+ifm.size.n       1
+ifm.size.c       20
+ifm.size.h       12
+ifm.size.w       12
+kernel.size.w    5
+kernel.size.h    5
+stride.size.w    1
+stride.size.h    1
+pad.size.w       0
+pad.size.h       0
+group_num        1
+output_num       50
