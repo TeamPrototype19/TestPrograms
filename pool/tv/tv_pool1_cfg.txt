@@ -1,0 +1,12 @@
+ifm.size.n       10
+ifm.size.c       20
+ifm.size.h       24
+ifm.size.w       24
+kernel.size.w    2
+kernel.size.h    2
+stride.size.w    2
+stride.size.h    2
+pad.size.w       0
+pad.size.h       0
+pool_type        0
+global_pooling   0
