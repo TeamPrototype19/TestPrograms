@@ -24,6 +24,7 @@ void test_kernel_conv3d(
     int PH = cinfo.pad_size_h;
 
     for(int n = 0 ; n < N ; n++) {
+        float *bp = bias;
     for(int o = 0 ; o < O ; o++) {
 
         /* IFM loop (3D)
@@ -38,20 +39,21 @@ void test_kernel_conv3d(
                     for(int c = 0 ; c < C ; c++) {
                         for(int kh = 0 ; kh < KH ; kh++) {
                             if( (h+kh) >= 0 && (h+kh) < H ) {
-                                float *inp = input + (W*(h+kh)) + (W*H*c) + w;
+                                float *inp = input + (W*(h+kh)) + (W*H*c) + w + (C*H*W*n);
                                 float *wgt = weight + (KW*kh) + (KW*KH*c) + (KW*KH*C*o);
                                 for(int kw = 0 ; kw < KW ; kw++) {
                                     if( (w+kw) >= 0 && (w+kw) < W )
-                                        sum += (*inp++) * (*wgt++);
+                                        sum += (*inp) * (*wgt++);
+                                    inp++;
                                 }
                             }
                         }
                     }
-                    *output++ = sum + *bias;
+                    *output++ = sum + *bp;
                 }
             }
         }
-        bias++;
+        bp++;
     }
     }
 }

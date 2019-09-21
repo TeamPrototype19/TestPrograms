@@ -1,4 +1,4 @@
-ifm.size.n       1
+ifm.size.n       10
 ifm.size.c       20
 ifm.size.h       12
 ifm.size.w       12
