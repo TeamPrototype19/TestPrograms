@@ -1,0 +1,5 @@
+ifm.size.n       10
+ifm.size.c       50
+ifm.size.h       4
+ifm.size.w       4
+output_num       500
