@@ -64,9 +64,19 @@ void flatbuff_deserialize_test(std::string filename) {
             auto kernel_size = opinfo_conv->kernel_size();
             auto stride_size = opinfo_conv->stride_size();
             auto pad_size    = opinfo_conv->pad_size();
+            auto weight      = opinfo_conv->weight();
             std::cout << "    kernel_size = " << kernel_size << "\n";
             std::cout << "    stride_size = " << stride_size << "\n";
             std::cout << "    pad_size    = " << pad_size << "\n";
+            //std::cout << "    weight_size = " << weight->size() << "\n";
+            //std::cout << "    weight_ptr  = " << weight->data() << "\n";
+            std::cout << "    weight_data = ";
+            const float *ptr = weight->data();
+            for(int i = 0 ; i < weight->size() ; i++) {
+                //std::cout << weight->Get(i) << " ";
+                std::cout << ptr[i] << " ";
+            }
+            std::cout << "\n"; 
         }
         else if( kernel->opinfo_type() == kernel_info_Relu ) {
             //std::cout << "    type = " << "Relu" << "\n";
@@ -90,9 +100,11 @@ void flatbuff_serialize_test(std::string filename) {
     int  conv_kernel_size = 1;
     int  conv_stride_size = 1;
     int  conv_pad_size = 0;
+    float weights[] = {1.34, 2.349, 102.2928, 1.2294};
+    auto conv_weight = builder.CreateVector(weights, 4);
 
     auto op_conv = CreateConv(builder, conv_name, conv_kernel_size,
-            conv_stride_size, conv_pad_size);
+            conv_stride_size, conv_pad_size, conv_weight);
 
     /* Relu OP code generation
      */

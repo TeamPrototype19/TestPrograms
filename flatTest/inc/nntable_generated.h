@@ -210,7 +210,8 @@ struct Conv FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_NAME = 4,
     VT_KERNEL_SIZE = 6,
     VT_STRIDE_SIZE = 8,
-    VT_PAD_SIZE = 10
+    VT_PAD_SIZE = 10,
+    VT_WEIGHT = 12
   };
   const flatbuffers::String *name() const {
     return GetPointer<const flatbuffers::String *>(VT_NAME);
@@ -224,6 +225,9 @@ struct Conv FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   int32_t pad_size() const {
     return GetField<int32_t>(VT_PAD_SIZE, 0);
   }
+  const flatbuffers::Vector<float> *weight() const {
+    return GetPointer<const flatbuffers::Vector<float> *>(VT_WEIGHT);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_NAME) &&
@@ -231,6 +235,8 @@ struct Conv FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<int32_t>(verifier, VT_KERNEL_SIZE) &&
            VerifyField<int32_t>(verifier, VT_STRIDE_SIZE) &&
            VerifyField<int32_t>(verifier, VT_PAD_SIZE) &&
+           VerifyOffset(verifier, VT_WEIGHT) &&
+           verifier.VerifyVector(weight()) &&
            verifier.EndTable();
   }
 };
@@ -250,6 +256,9 @@ struct ConvBuilder {
   void add_pad_size(int32_t pad_size) {
     fbb_.AddElement<int32_t>(Conv::VT_PAD_SIZE, pad_size, 0);
   }
+  void add_weight(flatbuffers::Offset<flatbuffers::Vector<float>> weight) {
+    fbb_.AddOffset(Conv::VT_WEIGHT, weight);
+  }
   explicit ConvBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -267,8 +276,10 @@ inline flatbuffers::Offset<Conv> CreateConv(
     flatbuffers::Offset<flatbuffers::String> name = 0,
     int32_t kernel_size = 0,
     int32_t stride_size = 0,
-    int32_t pad_size = 0) {
+    int32_t pad_size = 0,
+    flatbuffers::Offset<flatbuffers::Vector<float>> weight = 0) {
   ConvBuilder builder_(_fbb);
+  builder_.add_weight(weight);
   builder_.add_pad_size(pad_size);
   builder_.add_stride_size(stride_size);
   builder_.add_kernel_size(kernel_size);
@@ -281,14 +292,17 @@ inline flatbuffers::Offset<Conv> CreateConvDirect(
     const char *name = nullptr,
     int32_t kernel_size = 0,
     int32_t stride_size = 0,
-    int32_t pad_size = 0) {
+    int32_t pad_size = 0,
+    const std::vector<float> *weight = nullptr) {
   auto name__ = name ? _fbb.CreateString(name) : 0;
+  auto weight__ = weight ? _fbb.CreateVector<float>(*weight) : 0;
   return NNExecutor::CreateConv(
       _fbb,
       name__,
       kernel_size,
       stride_size,
-      pad_size);
+      pad_size,
+      weight__);
 }
 
 struct Relu FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
