@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstring>
 #include <stdexcept>
+#include <iomanip>
 
 #include "log.h"
 //#include "nnexec.hpp"
@@ -16,7 +17,7 @@ void float_snr_check( std::ofstream &rfs, float *in, float *out, int data_size);
 
 int main(int argc, char **argv) {
 	char option;
-	const char *optstring = "r:i:o:";
+	const char *optstring = "t:r:R:";
 
     open_log_file("log.txt");
 
@@ -24,28 +25,28 @@ int main(int argc, char **argv) {
      */
 	if( argc != 7 ) {
         std::cerr << "Not enough input arguments" << std::endl;
-        std::cerr << "nne -i [input file name] -o [output file name] -r [report file name]" << std::endl;
+        std::cerr << "nne -t [test file name] -r [reference file name] -R [report file name]" << std::endl;
         logfs << "--> invalid command arguments.\n";
 		return -1;
 	}
 
     std::string inputFileName  = "input.dat";
-    std::string outputFileName = "output.dat";
+    std::string referFileName  = "refer.dat";
     std::string reportFileName = "report.txt";
 
     while( -1 != (option = getopt(argc, argv, optstring))) {
 		switch(option) {
-			case 'r':	reportFileName = optarg;
+			case 'R':	reportFileName = optarg;
 						break;
-			case 'i':	inputFileName = optarg;
+			case 't':	inputFileName = optarg;
 						break;
-			case 'o':	outputFileName = optarg;
+			case 'r':	referFileName = optarg;
 						break;
 		}
 	}
 
     std::cout << "Input  file path = " << inputFileName << "\n";
-    std::cout << "Output file path = " << outputFileName << "\n";
+    std::cout << "Refer  file path = " << referFileName << "\n";
     std::cout << "Report file path = " << reportFileName << "\n";
 
     /* Report file open 
@@ -62,20 +63,20 @@ int main(int argc, char **argv) {
     /* Main processing
      */
     try {
-        char *ibuf = nullptr, *obuf = nullptr;
-        int ibsize, obsize;
+        char *ibuf = nullptr, *rbuf = nullptr;
+        int ibsize, rbsize;
 
 
         // Read input/output file size
         readBinaryData( ibuf, ibsize, inputFileName );
-        readBinaryData( obuf, obsize, outputFileName );
+        readBinaryData( rbuf, rbsize, referFileName );
 
-        if( ibsize != obsize )
-            throw std::runtime_error("The size of input and output files is not same.");
+        if( ibsize != rbsize )
+            throw std::runtime_error("[ERROR] The size of input and output files is not same.");
 
 
         std::cout << "Checking...\n";
-        float_snr_check( rfs, (float*)ibuf, (float*)obuf, ibsize / sizeof(float) );
+        float_snr_check( rfs, (float*)rbuf, (float*)ibuf, ibsize / sizeof(float) );
     }
     catch (const std::exception& e) {
         std::cout << e.what() << "\n";
@@ -125,24 +126,36 @@ void readBinaryData(char* &buf, int &size, std::string filename) {
 
 void float_snr_check( 
     std::ofstream &rfs, 
-    float *in, 
-    float *out, 
+    float *ref, 
+    float *test, 
     int data_size
 )
 {
     float sigPw = 0;
     float nosPw = 0;
+    int   diff_cnt = 0;
 
     for(int i = 0 ; i < data_size ; i++) {
-        float diff = *in - *out;
-        if( *in != *out )
-            rfs << "[" << i << "]\t" << diff << "\t" << *in << "\t" << *out << "\n";
+        float diff = *ref - *test;
+        if( *ref != *test) {
+            int r = *(int*)ref;
+            int t = *(int*)test;
+            rfs << "[" << i << "]\t" << diff << "\tRef: " << *ref << "\tTst: " << *test << "\t";
+            rfs << "r.hex = 0x" << std::setfill('0') << std::right << std::setw(8) << std::hex << r << "\t";
+            rfs << "t.hex = 0x" << std::setfill('0') << std::right << std::setw(8) << t << std::dec << "\n";
+            diff_cnt++;
+        }
 
-        sigPw += (*in) * (*in);
+        sigPw += (*ref) * (*ref);
         nosPw += diff * diff;
     }
 
-    rfs << "Final SNR = " << 10*log10(sigPw / nosPw);
+    rfs << "/*---------------------------------------------*\n";
+    rfs << " * SNR CHECK REPORT                            *\n";
+    rfs << " * Checked data number = " << std::setw(7) << std::right << data_size << "               *\n";
+    rfs << " * NotSame data number = " << std::setw(7) << std::right << diff_cnt  << "               *\n";
+    rfs << " * Final SNR           = " << std::setw(7) << std::right << 10*log10(sigPw / nosPw) << " (dB)          *\n";
+    rfs << " *---------------------------------------------*/\n";
 
     return;
 }
