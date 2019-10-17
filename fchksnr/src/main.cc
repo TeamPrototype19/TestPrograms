@@ -45,9 +45,11 @@ int main(int argc, char **argv) {
 		}
 	}
 
+#ifdef VERBOSE
     std::cout << "Input  file path = " << inputFileName << "\n";
     std::cout << "Refer  file path = " << referFileName << "\n";
     std::cout << "Report file path = " << reportFileName << "\n";
+#endif
 
     /* Report file open 
      */
@@ -75,7 +77,9 @@ int main(int argc, char **argv) {
             throw std::runtime_error("[ERROR] The size of input and output files is not same.");
 
 
+#ifdef VERBOSE
         std::cout << "Checking...\n";
+#endif
         float_snr_check( rfs, (float*)rbuf, (float*)ibuf, ibsize / sizeof(float) );
     }
     catch (const std::exception& e) {
@@ -83,7 +87,9 @@ int main(int argc, char **argv) {
         std::cout << "Program receives exception. Program will be terminated.\n";
     }
 
+#ifdef VERBOSE
     std::cout << "Finished!\n";
+#endif
 
     rfs.close();
 
@@ -140,14 +146,20 @@ void float_snr_check(
         if( *ref != *test) {
             int r = *(int*)ref;
             int t = *(int*)test;
+            rfs << std::scientific;
             rfs << "[" << i << "]\t" << diff << "\tRef: " << *ref << "\tTst: " << *test << "\t";
             rfs << "r.hex = 0x" << std::setfill('0') << std::right << std::setw(8) << std::hex << r << "\t";
-            rfs << "t.hex = 0x" << std::setfill('0') << std::right << std::setw(8) << t << std::dec << "\n";
+            rfs << "t.hex = 0x" << std::setfill('0') << std::right << std::setw(8) << t << "\n";
+            rfs << std::setfill(' ') << std::dec;   // roll-back
+            rfs << std::defaultfloat;
             diff_cnt++;
         }
 
         sigPw += (*ref) * (*ref);
         nosPw += diff * diff;
+        
+        ref++;
+        test++;
     }
 
     rfs << "/*---------------------------------------------*\n";
