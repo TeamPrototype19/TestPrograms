@@ -1,0 +1,5 @@
+ifm.size.n       1
+ifm.size.c       32
+ifm.size.h       149
+ifm.size.w       149
+eps              0.001
