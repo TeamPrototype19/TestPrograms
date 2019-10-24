@@ -12,20 +12,21 @@
 //#include "nnexec.hpp"
 
 void readBinaryData(char* &buf, int &size, std::string filename);
-void float_snr_check( std::ofstream &rfs, float *in, float *out, int data_size);
+void float_snr_check( std::ofstream &rfs, float *in, float *out, int data_size, std::string);
 //void writeBinaryData(char* &buf, int &size, std::string filename);
 
 int main(int argc, char **argv) {
 	char option;
-	const char *optstring = "t:r:R:";
+	const char *optstring = "t:r:R:n:";
 
     open_log_file("log.txt");
 
     /* Parsing Command arguments
      */
-	if( argc != 7 ) {
+	if( argc != 7 && argc != 9 ) {
         std::cerr << "Not enough input arguments" << std::endl;
-        std::cerr << "nne -t [test file name] -r [reference file name] -R [report file name]" << std::endl;
+        std::cerr << "nne -t [test file name] -r [reference file name] -R [report file name]\n";
+        std::cerr << "(optinal): -n [layer name]\n";
         logfs << "--> invalid command arguments.\n";
 		return -1;
 	}
@@ -33,6 +34,7 @@ int main(int argc, char **argv) {
     std::string inputFileName  = "input.dat";
     std::string referFileName  = "refer.dat";
     std::string reportFileName = "report.txt";
+    std::string layerName;
 
     while( -1 != (option = getopt(argc, argv, optstring))) {
 		switch(option) {
@@ -42,6 +44,8 @@ int main(int argc, char **argv) {
 						break;
 			case 'r':	referFileName = optarg;
 						break;
+			case 'n':	layerName = optarg;
+						break;
 		}
 	}
 
@@ -49,6 +53,8 @@ int main(int argc, char **argv) {
     std::cout << "Input  file path = " << inputFileName << "\n";
     std::cout << "Refer  file path = " << referFileName << "\n";
     std::cout << "Report file path = " << reportFileName << "\n";
+    if( layerName.length() > 0 )
+        std::cout << "Layer name       = " << layerName << "\n";
 #endif
 
     /* Report file open 
@@ -80,7 +86,7 @@ int main(int argc, char **argv) {
 #ifdef VERBOSE
         std::cout << "Checking...\n";
 #endif
-        float_snr_check( rfs, (float*)rbuf, (float*)ibuf, ibsize / sizeof(float) );
+        float_snr_check( rfs, (float*)rbuf, (float*)ibuf, ibsize / sizeof(float), layerName );
     }
     catch (const std::exception& e) {
         std::cout << e.what() << "\n";
@@ -134,7 +140,8 @@ void float_snr_check(
     std::ofstream &rfs, 
     float *ref, 
     float *test, 
-    int data_size
+    int data_size,
+    std::string layerName
 )
 {
     float sigPw = 0;
@@ -162,12 +169,17 @@ void float_snr_check(
         test++;
     }
 
-    rfs << "/*---------------------------------------------*\n";
-    rfs << " * SNR CHECK REPORT                            *\n";
-    rfs << " * Checked data number = " << std::setw(7) << std::right << data_size << "               *\n";
-    rfs << " * NotSame data number = " << std::setw(7) << std::right << diff_cnt  << "               *\n";
-    rfs << " * Final SNR           = " << std::setw(7) << std::right << 10*log10(sigPw / nosPw) << " (dB)          *\n";
-    rfs << " *---------------------------------------------*/\n";
+    rfs << "/*-----------------------------------------------------------------*\n";
+    rfs << " * SNR CHECK REPORT                                                *\n";
+    rfs << " * Checked data number = " << std::setw(7) << std::right << data_size << "                                   *\n";
+    rfs << " * NotSame data number = " << std::setw(7) << std::right << diff_cnt  << "                                   *\n";
+    rfs << " * Final SNR           = " << std::setw(7) << std::right << 10*log10(sigPw / nosPw) << " (dB)";
+    if( layerName.length() > 0)
+        rfs << "    [" << std::setw(20) << std::left << layerName << "]   ";
+    else
+        rfs << "                             ";
+    rfs << " *\n";
+    rfs << " *-----------------------------------------------------------------*/\n";
 
     return;
 }
