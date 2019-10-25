@@ -181,6 +181,11 @@ void float_snr_check(
     rfs << " *\n";
     rfs << " *-----------------------------------------------------------------*/\n";
 
+    std::cout << "Final SNR  = " << std::setw(7) << std::right << std::setprecision(3) << 10*log10(sigPw / nosPw) << " (dB)";
+    if( layerName.length() > 0)
+        std::cout << "    [" << std::setw(20) << std::left << layerName << "]   ";
+    std::cout << "\n";
+
     return;
 }
 
