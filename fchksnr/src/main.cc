@@ -169,21 +169,23 @@ void float_snr_check(
         test++;
     }
 
-    rfs << "/*-----------------------------------------------------------------*\n";
-    rfs << " * SNR CHECK REPORT                                                *\n";
-    rfs << " * Checked data number = " << std::setw(7) << std::right << data_size << "                                   *\n";
-    rfs << " * NotSame data number = " << std::setw(7) << std::right << diff_cnt  << "                                   *\n";
+    rfs << "/*---------------------------------------------------------------------------*\n";
+    rfs << " * SNR CHECK REPORT                                                          *\n";
+    rfs << " * Checked data number = " << std::setw(7) << std::right << data_size \
+        << "                                             *\n";
+    rfs << " * NotSame data number = " << std::setw(7) << std::right << diff_cnt  \
+        << "                                             *\n";
     rfs << " * Final SNR           = " << std::setw(7) << std::right << 10*log10(sigPw / nosPw) << " (dB)";
     if( layerName.length() > 0)
-        rfs << "    [" << std::setw(20) << std::left << layerName << "]   ";
+        rfs << "    [" << std::setw(30) << std::left << layerName << "]   ";
     else
-        rfs << "                             ";
+        rfs << "                                       ";
     rfs << " *\n";
-    rfs << " *-----------------------------------------------------------------*/\n";
+    rfs << " *---------------------------------------------------------------------------*/\n";
 
     std::cout << "Final SNR  = " << std::setw(7) << std::right << std::setprecision(3) << 10*log10(sigPw / nosPw) << " (dB)";
     if( layerName.length() > 0)
-        std::cout << "    [" << std::setw(20) << std::left << layerName << "]   ";
+        std::cout << "    [" << std::setw(30) << std::left << layerName << "]   ";
     std::cout << "\n";
 
     return;
